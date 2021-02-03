@@ -28,32 +28,32 @@ ui <- fluidPage(
   )
 )
 
-server = function(input, output) {
+server = function(input, output, session) {
   
   data_source <- reactive({
+    
     data <- req(input$usertext)
+    
+    # create a quanteda corpus using the input text
     my_corpus <- corpus(data)
-    my_tokens <- tokens(my_corpus,
-                        remove_punct = TRUE,
-                        remove_symbols = TRUE,
-                        remove_numbers = TRUE,
-                        remove_url = TRUE)
-    # make lowercase
-    my_tokens <-  tokens_tolower(my_tokens, keep_acronyms =TRUE)
-    # remove stop words
-    my_tokens_no_stop <- tokens_remove(my_tokens,
-                                       pattern = stopwords("en"))
     
     # construct the document feature matrix
-    dfmat <- dfm(my_tokens_no_stop)
+    
+    dfmat <- my_corpus %>% 
+      tokens(remove_punct = TRUE,
+             remove_symbols = TRUE,
+             remove_numbers = TRUE,
+             remove_url = TRUE) %>% 
+      tokens_tolower(keep_acronyms =TRUE) %>% 
+      tokens_remove(pattern = stopwords("en")) %>% 
+      dfm()
     
     # get frequencies
     term_frequency <- textstat_frequency(dfmat)
     
-    # create df for wordcloud
+    # create data frame for word cloud
     word_df <- as_tibble(term_frequency) %>% 
-      rename(word = feature,
-             freq = frequency) %>% 
+      rename(word = feature,freq = frequency) %>% 
       select(word, freq)
     return(word_df)
   })
