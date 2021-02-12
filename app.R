@@ -5,16 +5,19 @@ library(shiny)
 library(colourpicker)
 library(htmlwidgets)
 library(webshot)
+library(shinythemes)
 #webshot::install_phantomjs()
 
 ui <- fluidPage(
+  
+  theme = shinytheme("flatly"),
   titlePanel("Free Word Cloud Generator"),
   
   tabsetPanel(
     
     tabPanel("Text Input",
-             textAreaInput("usertext", "",
-        
+             textAreaInput("usertext", label = NULL,
+                           placeholder = "Type or paste your text here to generate a word cloud",
                            height = '400px') %>% 
                shiny::tagAppendAttributes(style = 'width:100%;'),
              ),
@@ -28,7 +31,7 @@ ui <- fluidPage(
                  
                  sidebarPanel(
                    
-                   helpText(h3("Use the options below to customise the word cloud")),
+                   helpText(h4("Use the options below to customise the word cloud")),
                    
                    selectInput(
                      inputId = "font",
@@ -160,7 +163,7 @@ server = function(input, output, session) {
       owd <- setwd(tempdir())
       on.exit(setwd(owd))
       saveWidget(word_cloud(), "temp.html", selfcontained = F)
-      webshot("temp.html", file = file, delay = 5,
+      webshot("temp.html", file = file, delay = 1,
               cliprect = "viewport")
 
     }
