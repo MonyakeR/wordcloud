@@ -1,25 +1,29 @@
 library(tidyverse)
 library(wordcloud2)
 library(quanteda)
+library(readtext)
+library(stringr)
 library(shiny)
 library(colourpicker)
 library(htmlwidgets)
 library(webshot)
 library(shinythemes)
-#webshot::install_phantomjs()
+webshot::install_phantomjs()
 
 ui <- fluidPage(
-  
+
   theme = shinytheme("flatly"),
-  titlePanel("Free Word Cloud Generator"),
+  titlePanel("Word Cloud Generator"),
   
   tabsetPanel(
     
     tabPanel("Text Input",
              textAreaInput("usertext", label = NULL,
-                           placeholder = "Type or paste your text here to generate a word cloud",
+                           placeholder = "Type or paste your text here or upload a file to generate a word cloud",
                            height = '400px') %>% 
                shiny::tagAppendAttributes(style = 'width:100%;'),
+             
+             fileInput("upload", "Upload a text file", accept = c(".csv", ".txt"))
              ),
     
     tabPanel("Word Cloud",
@@ -37,25 +41,25 @@ ui <- fluidPage(
                      inputId = "font",
                      label = "Font family",
                      choices = list(
-                       "sans-serif",
-                       "monospace",
-                       "cursive",
-                       "Playfair display",
-                       "Open Sans",
-                       "Poppins",
-                       "Rubik",
-                       "Montserrat",
-                       "Oswald",
-                       "Quicksand",
-                       "fantasy",
-                       "system-ui",
-                       "ui-serif",
-                       "ui-sans-serif",
-                       "ui-monospace",
-                       "ui-rounded",
-                       "emoji",
-                       "math",
-                       "fangsong"
+                       "Sans serif" = "sans-serif",
+                       "Monospace" = "monospace",
+                       "Cursive" = "cursive",
+                       "Playfair display" = "Playfair display",
+                       "Open Sans" = "Open Sans",
+                       "Poppins" = "Poppins",
+                       "Rubik" = "Rubik",
+                       "Montserrat" = "Montserrat",
+                       "Oswald" = "Oswald",
+                       "Quicksand" = "Quicksand",
+                       "Fantasy" = "fantasy",
+                       "System-ui" = "system-ui",
+                       "Ui-serif" = "ui-serif",
+                       "Ui-sans-serif" = "ui-sans-serif",
+                       "Ui-monospace" = "ui-monospace",
+                       "Ui-rounded" = "ui-rounded",
+                       "Emoji" = "emoji",
+                       "Math" = "math",
+                       "Fangsong" = "fangsong"
                      ),
                      selected = "sans-serif"
                    ),
@@ -64,13 +68,13 @@ ui <- fluidPage(
                      inputId = "shape",
                      label = "Shape of the cloud to draw",
                      choices = list(
-                       "circle",
-                       "cardioid",
-                       "diamond",
-                       "triangle-forward",
-                       "triangle",
-                       "pentagon",
-                       "star"
+                       "Circle" = "circle",
+                       "Cardioid" = "cardioid",
+                       "Diamond" = "diamond",
+                       "Triangle-forward" = "triangle-forward",
+                       "Triangle" = "triangle",
+                       "Pentagon" = "pentagon",
+                       "Star" = "star"
                      ),
                      selected = "circle"
                    ),
@@ -78,7 +82,7 @@ ui <- fluidPage(
                    colourInput(
                      inputId = "background",
                      label = "Colour of the background",
-                     returnName = TRUE,
+                     returnName = FALSE,
                      palette = "square",
                      closeOnClick = TRUE
                    ),
@@ -87,8 +91,8 @@ ui <- fluidPage(
                      inputId = "colour",
                      label = "Colour of text",
                      choices = list(
-                       "random-dark",
-                       "random-light"
+                       "Random-dark" = "random-dark",
+                       "Random-light" = "random-light"
                      ),
                      selected = "random-dark"
                    ),
@@ -100,7 +104,7 @@ ui <- fluidPage(
                  ),
                  mainPanel(
                    wordcloud2Output("mywordcloud", width = "100%",
-                                    height = "460px")
+                                    height = "520px")
                    )
                )
                
@@ -113,7 +117,16 @@ server = function(input, output, session) {
   
   data_source <- reactive({
     
-    data <- req(input$usertext)
+    pasted_data <- input$usertext
+    
+    if(str_length(pasted_data) > 1) {
+      data <- pasted_data
+    } else {
+      req(input$upload)
+      # read in the text file content
+      uploaded_data <- readtext(input$upload$datapath)
+      data <- uploaded_data$text
+    }
     
     # create a quanteda corpus using the input text
     my_corpus <- corpus(data)
@@ -163,7 +176,7 @@ server = function(input, output, session) {
       owd <- setwd(tempdir())
       on.exit(setwd(owd))
       saveWidget(word_cloud(), "temp.html", selfcontained = F)
-      webshot("temp.html", file = file, delay = 1,
+      webshot("temp.html", file = file, delay = 10,
               cliprect = "viewport")
 
     }

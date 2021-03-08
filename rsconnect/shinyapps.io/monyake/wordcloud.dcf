@@ -1,0 +1,10 @@
+name: wordcloud
+title:
+username:
+account: monyake
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 3663447
+bundleId: 4253374
+url: https://monyake.shinyapps.io/wordcloud/
+when: 1613941905.3296
