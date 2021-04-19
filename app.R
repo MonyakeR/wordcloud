@@ -29,87 +29,94 @@ ui <- fluidPage(
     tabPanel("Word Cloud",
              
              tags$div( style = "padding:10px",
-               
-  
-               sidebarLayout(
-                 
-                 sidebarPanel(
-                   
-                   helpText(h4("Use the options below to customise the word cloud")),
-                   
-                   selectInput(
-                     inputId = "font",
-                     label = "Font family",
-                     choices = list(
-                       "Sans serif" = "sans-serif",
-                       "Monospace" = "monospace",
-                       "Cursive" = "cursive",
-                       "Playfair display" = "Playfair display",
-                       "Open Sans" = "Open Sans",
-                       "Poppins" = "Poppins",
-                       "Rubik" = "Rubik",
-                       "Montserrat" = "Montserrat",
-                       "Oswald" = "Oswald",
-                       "Quicksand" = "Quicksand",
-                       "Fantasy" = "fantasy",
-                       "System-ui" = "system-ui",
-                       "Ui-serif" = "ui-serif",
-                       "Ui-sans-serif" = "ui-sans-serif",
-                       "Ui-monospace" = "ui-monospace",
-                       "Ui-rounded" = "ui-rounded",
-                       "Emoji" = "emoji",
-                       "Math" = "math",
-                       "Fangsong" = "fangsong"
-                     ),
-                     selected = "sans-serif"
-                   ),
-                   
-                   selectInput(
-                     inputId = "shape",
-                     label = "Shape of the cloud to draw",
-                     choices = list(
-                       "Circle" = "circle",
-                       "Cardioid" = "cardioid",
-                       "Diamond" = "diamond",
-                       "Triangle-forward" = "triangle-forward",
-                       "Triangle" = "triangle",
-                       "Pentagon" = "pentagon",
-                       "Star" = "star"
-                     ),
-                     selected = "circle"
-                   ),
-                   
-                   colourInput(
-                     inputId = "background",
-                     label = "Colour of the background",
-                     returnName = FALSE,
-                     palette = "square",
-                     closeOnClick = TRUE
-                   ),
-                   
-                   selectInput(
-                     inputId = "colour",
-                     label = "Colour of text",
-                     choices = list(
-                       "Random-dark" = "random-dark",
-                       "Random-light" = "random-light"
-                     ),
-                     selected = "random-dark"
-                   ),
-                   
-                   downloadButton("wordcloud_download",
-                                  label = "Download Word Cloud",
-                                  class = "btn-block")
-                   
-                 ),
-                 mainPanel(
-                   wordcloud2Output("mywordcloud", width = "100%",
-                                    height = "520px")
-                   )
-               )
-               
+                       
+              fluidRow(
+                column(
+                  2,
+                  selectInput(
+                    inputId = "font",
+                    label = "Font family",
+                    choices = list(
+                      "Sans serif" = "sans-serif",
+                      "Monospace" = "monospace",
+                      "Cursive" = "cursive",
+                      "Playfair display" = "Playfair display",
+                      "Open Sans" = "Open Sans",
+                      "Poppins" = "Poppins",
+                      "Rubik" = "Rubik",
+                      "Montserrat" = "Montserrat",
+                      "Oswald" = "Oswald",
+                      "Quicksand" = "Quicksand",
+                      "Fantasy" = "fantasy",
+                      "System-ui" = "system-ui",
+                      "Ui-serif" = "ui-serif",
+                      "Ui-sans-serif" = "ui-sans-serif",
+                      "Ui-monospace" = "ui-monospace",
+                      "Ui-rounded" = "ui-rounded",
+                      "Emoji" = "emoji",
+                      "Math" = "math",
+                      "Fangsong" = "fangsong"
+                    ),
+                    selected = "sans-serif"
+                  )
+                ),
+                column(2,
+                       selectInput(
+                         inputId = "shape",
+                         label = "Shape of the cloud to draw",
+                         choices = list(
+                           "Circle" = "circle",
+                           "Cardioid" = "cardioid",
+                           "Diamond" = "diamond",
+                           "Triangle-forward" = "triangle-forward",
+                           "Triangle" = "triangle",
+                           "Pentagon" = "pentagon",
+                           "Star" = "star"
+                         ),
+                         selected = "circle"
+                       )
+                  ),
+                  column(2,
+                         colourInput(
+                           inputId = "background",
+                           label = "Colour of the background",
+                           returnName = FALSE,
+                           palette = "square",
+                           closeOnClick = TRUE
+                         )
+                       ),
+                column(2,
+                       selectInput(
+                         inputId = "colour",
+                         label = "Colour of text",
+                         choices = list(
+                           "Random-dark" = "random-dark",
+                           "Random-light" = "random-light"
+                         ),
+                         selected = "random-dark"
+                       )
+                       
+                  ),
+                column(4,
+                       downloadButton("wordcloud_download",
+                                      label = "Download Word Cloud",
+                                      class = "btn-block")
+                       )
+              ),
+              
+              fluidRow(
+                column(12,
+                       wordcloud2Output("mywordcloud", width = "100%",
+                                        height = "768px")
+                )
+              )
+          )
+      ),
+    
+    tabPanel("Frequency Analysis",
+             
+             plotOutput("frequency")
              )
-      )
   )
 )
 
@@ -181,6 +188,15 @@ server = function(input, output, session) {
 
     }
   )
+  
+  # plot frequency
+  output$frequency <- renderPlot({
+    data_source() %>% 
+      filter(freq > 1) %>% 
+      ggplot(aes(word, freq)) + 
+      geom_point() + 
+      coord_flip()
+  })
 }
 
 shinyApp(ui, server)
