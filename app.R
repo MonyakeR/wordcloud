@@ -77,12 +77,23 @@ ui <- fluidPage(
                        )
                   ),
                   column(2,
+                         tags$style(
+                           ".form-control.shiny-colour-input.colourpicker-input {
+                               padding: 6px 12px;
+                               height: 34px;
+                               border: 1px solid #dce4ec;
+                             }
+                           .selectize-input {
+                              border: 1px solid #dce4ec;
+                           }
+                           "
+                         ),
                          colourInput(
                            inputId = "background",
                            label = "Colour of the background",
                            returnName = FALSE,
                            palette = "square",
-                           closeOnClick = TRUE
+                           closeOnClick = TRUE,
                          )
                        ),
                 column(2,
@@ -100,8 +111,22 @@ ui <- fluidPage(
                 column(4,
                        downloadButton("wordcloud_download",
                                       label = "Download Word Cloud",
-                                      class = "btn-block")
+                                      class = "btn-block"),
+                       tags$style(
+                         ".shiny-download-link {
+                            padding: 4px 2px 4px 2px;
+                            margin-top: 26px; 
+                            background-color: #154c79;
+                            border-color: #154c79;
+                         }
+                         
+                         .shiny-download-link:hover {
+                            background-color: #4682B4;
+                            border-color: #4682B4;
+                         }"
                        )
+                       
+                    )
               ),
               
               fluidRow(
@@ -111,12 +136,7 @@ ui <- fluidPage(
                 )
               )
           )
-      ),
-    
-    tabPanel("Frequency Analysis",
-             
-             plotOutput("frequency")
-             )
+      )
   )
 )
 
@@ -138,18 +158,43 @@ server = function(input, output, session) {
     # create a quanteda corpus using the input text
     my_corpus <- corpus(data)
     
+    # create tokens
+    toks <- tokens(
+      my_corpus,
+      remove_punct = TRUE,
+      remove_symbols = TRUE,
+      padding = TRUE
+    ) %>% 
+      tokens_remove(stopwords("en"), padding = TRUE)
+    
+    # Get compound words
+    
+    colls <- textstat_collocations(toks, size = c(2,3),  min_count = 2, tolower = TRUE)
+    
+    toks_comp <- tokens_compound(
+      toks,
+      pattern = colls,
+      case_insensitive = TRUE,
+    )
+    
     # construct the document feature matrix
-    dfmat <- my_corpus %>% 
-      tokens(remove_punct = TRUE,
-             remove_symbols = TRUE,
-             remove_numbers = TRUE,
-             remove_url = TRUE) %>% 
-      tokens_tolower(keep_acronyms =TRUE) %>% 
-      tokens_remove(pattern = stopwords("en")) %>% 
-      dfm()
+    
+    dfmat <- dfm(
+      toks_comp
+    )
+    
     
     # get frequencies
+    
     term_frequency <- textstat_frequency(dfmat)
+    
+    # Split strings
+    
+    term_frequency <- term_frequency %>% 
+      filter(feature != "") %>% 
+      mutate(
+        feature = str_replace_all(feature, "_"," "),
+      )
     
     # create data frame for word cloud
     word_df <- as_tibble(term_frequency) %>% 
@@ -167,7 +212,8 @@ server = function(input, output, session) {
       backgroundColor = input$background,
       color = input$colour,
       shape = input$shape,
-      rotateRatio = 0
+      rotateRatio = 0,
+      size = 0.9
     )
   })
   
