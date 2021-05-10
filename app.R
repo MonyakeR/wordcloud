@@ -215,9 +215,12 @@ server = function(input, output, session) {
       uploaded_data <- readtext(input$upload$datapath)
       data <- uploaded_data$text
     }
+  })
+
+  word_cloud_df <- reactive(({
     
     # create a quanteda corpus using the input text
-    my_corpus <- corpus(data)
+    my_corpus <- corpus(data_source())
     
     # create tokens
     toks <- tokens(
@@ -229,7 +232,6 @@ server = function(input, output, session) {
       tokens_remove(stopwords("en"), padding = TRUE)
     
     # Get compound words
-    
     colls <- textstat_collocations(toks, size = c(2,3),  min_count = 2, tolower = TRUE)
     
     toks_comp <- tokens_compound(
@@ -239,18 +241,14 @@ server = function(input, output, session) {
     )
     
     # construct the document feature matrix
-    
     dfmat <- dfm(
       toks_comp
     )
     
-    
     # get frequencies
-    
     term_frequency <- textstat_frequency(dfmat)
     
     # Split strings
-    
     term_frequency <- term_frequency %>% 
       filter(feature != "") %>% 
       mutate(
@@ -264,21 +262,21 @@ server = function(input, output, session) {
     
     return(word_df)
     
-  })
-  
-  word_cloud <- reactive({
-    wordcloud2(
-      data_source(),
-      fontFamily = input$font,
-      backgroundColor = input$background,
-      color = input$colour,
-      shape = input$shape,
-      rotateRatio = 0,
-      size = 0.9
-    )
-  })
+  }))
   
   output$mywordcloud <- renderWordcloud2({
+    
+    word_cloud <- reactive({
+      wordcloud2(
+        word_cloud_df(),
+        fontFamily = input$font,
+        backgroundColor = input$background,
+        color = input$colour,
+        shape = input$shape,
+        rotateRatio = 0,
+        size = 0.9
+      )
+    })
     word_cloud()
   })
   
@@ -298,7 +296,7 @@ server = function(input, output, session) {
   
   # plot frequency table
   output$table <- renderReactable({
-    data_source() %>% 
+    word_cloud_df() %>% 
       filter(freq > 1) %>% 
       reactable(
         defaultSorted = "freq",
@@ -311,7 +309,7 @@ server = function(input, output, session) {
             defaultSortOrder = "desc",
             # Render the bar charts using custom cell render function
             cell = function(value) {
-              width <- paste0(value * 100 / max(data_source()$freq), "%")
+              width <- paste0(value * 100 / max(word_cloud_df()$freq), "%")
               # Fix each label using the width of the widest number
               value <- format(value, width = 3, justify = "right")
               bar_chart(value, width = width, fill  = "#12c462")
@@ -328,7 +326,8 @@ server = function(input, output, session) {
   
   # get keyword in context
   output$keyword_context <- renderReactable({
-    my_corpus <- corpus(input$usertext)
+    
+    my_corpus <- corpus(data_source())
     # create tokens
     toks <- tokens(
         my_corpus,
