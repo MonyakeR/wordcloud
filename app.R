@@ -217,7 +217,7 @@ server = function(input, output, session) {
     }
   })
 
-  word_cloud_df <- reactive(({
+  word_cloud_df <- reactive({
     
     # create a quanteda corpus using the input text
     my_corpus <- corpus(data_source())
@@ -258,11 +258,12 @@ server = function(input, output, session) {
     # create data frame for word cloud
     word_df <- as_tibble(term_frequency) %>% 
       rename(word = feature,freq = frequency) %>% 
-      select(word, freq)
+      select(word, freq) %>% 
+      filter(str_length(word) > 2)
     
     return(word_df)
     
-  }))
+  })
   
   output$mywordcloud <- renderWordcloud2({
     
@@ -297,7 +298,7 @@ server = function(input, output, session) {
   # plot frequency table
   output$table <- renderReactable({
     word_cloud_df() %>% 
-      filter(freq > 1) %>% 
+      filter(freq > 1 & str_length(word) > 2) %>% 
       reactable(
         defaultSorted = "freq",
         columns = list(
@@ -331,7 +332,6 @@ server = function(input, output, session) {
     # create tokens
     toks <- tokens(
         my_corpus,
-        remove_punct = TRUE,
         remove_symbols = TRUE,
         padding = TRUE
       )
