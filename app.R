@@ -1,6 +1,7 @@
 library(tidyverse)
 library(wordcloud2)
 library(quanteda)
+library(quanteda.textstats)
 library(readtext)
 library(stringr)
 library(shiny)
@@ -8,7 +9,18 @@ library(colourpicker)
 library(htmlwidgets)
 library(webshot)
 library(shinythemes)
-webshot::install_phantomjs()
+library(reactable)
+library(htmltools)
+#webshot::install_phantomjs()
+
+
+# Render a bar chart with a label on the left
+bar_chart <- function(label, width = "100%", height = "14px", fill = "#00bfc4", background = NULL) {
+  bar <- div(style = list(background = fill, width = width, height = height))
+  chart <- div(style = list(flexGrow = 1, marginLeft = "6px", background = background), bar)
+  div(style = list(display = "flex", alignItems = "center"), label, chart)
+}
+
 
 ui <- fluidPage(
 
@@ -136,7 +148,56 @@ ui <- fluidPage(
                 )
               )
           )
-      )
+      ),
+    tabPanel("Keyword-In-Context",
+             fluidRow(
+               column(
+                 4,
+                 reactableOutput("table")
+               ),
+              column(
+                8,
+                fluidRow(
+                  column(
+                    6,
+                    textInput(
+                      "keyword",
+                      label = "Enter keyword to get context",
+                      width = "100%"
+                    )
+                  ),
+                  column(
+                    6, 
+                    sliderInput(
+                      "window",
+                      "Window size",
+                      min = 3,
+                      max = 10,
+                      value = 5
+                    )
+                  ),
+                  fluidRow(
+                    column(
+                      12,
+                      reactableOutput("keyword_context"),
+                      tags$style(
+                        ".keyword {
+                          display: inline-block;
+                            padding: 2px 12px;
+                            border-radius: 15px;
+                            font-weight: 600;
+                            font-size: 12px;
+                            background: hsl(116, 60%, 90%);
+                            color: hsl(116, 30%, 25%);
+                          }
+                        "
+                      )
+                    )
+                  )
+                )
+              )
+             )
+            )
   )
 )
 
@@ -235,13 +296,59 @@ server = function(input, output, session) {
     }
   )
   
-  # plot frequency
-  output$frequency <- renderPlot({
+  # plot frequency table
+  output$table <- renderReactable({
     data_source() %>% 
       filter(freq > 1) %>% 
-      ggplot(aes(word, freq)) + 
-      geom_point() + 
-      coord_flip()
+      reactable(
+        defaultSorted = "freq",
+        columns = list(
+          word = colDef(
+            name = "Word"
+          ),
+          freq = colDef(
+            name = "Frequency",
+            defaultSortOrder = "desc",
+            # Render the bar charts using custom cell render function
+            cell = function(value) {
+              width <- paste0(value * 100 / max(data_source()$freq), "%")
+              # Fix each label using the width of the widest number
+              value <- format(value, width = 3, justify = "right")
+              bar_chart(value, width = width, fill  = "#12c462")
+            },
+            # And left-align the columns
+            align = "left",
+            # Use the operating system's default monospace font, and
+            # preserve white space to prevent it from being collapsed by default
+            style = list(fontFamily = "monospace", whiteSpace = "pre")
+          )
+        )
+      )
+  })
+  
+  # get keyword in context
+  output$keyword_context <- renderReactable({
+    my_corpus <- corpus(input$usertext)
+    # create tokens
+    toks <- tokens(
+        my_corpus,
+        remove_punct = TRUE,
+        remove_symbols = TRUE,
+        padding = TRUE
+      )
+    req(input$keyword)
+    kw <- kwic(toks, pattern = phrase(input$keyword),
+               window = input$window)
+    data.frame(kw) %>%
+      select(pre, keyword, post)%>%
+      reactable(
+      columns = list(
+        keyword = colDef(cell = function(value) {
+          class <- "keyword"
+          div(class = class, value)
+        })
+      )
+    )
   })
 }
 
