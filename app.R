@@ -11,7 +11,7 @@ library(webshot)
 library(shinythemes)
 library(reactable)
 library(htmltools)
-#webshot::install_phantomjs()
+webshot::install_phantomjs()
 
 
 # Render a bar chart with a label on the left
@@ -275,19 +275,19 @@ server = function(input, output, session) {
     
   })
   
+  word_cloud <- reactive({
+    wordcloud2(
+      word_cloud_df(),
+      fontFamily = input$font,
+      backgroundColor = input$background,
+      color = input$colour,
+      shape = input$shape,
+      rotateRatio = 0,
+      size = 0.9
+    )
+  })
+  
   output$mywordcloud <- renderWordcloud2({
-    
-    word_cloud <- reactive({
-      wordcloud2(
-        word_cloud_df(),
-        fontFamily = input$font,
-        backgroundColor = input$background,
-        color = input$colour,
-        shape = input$shape,
-        rotateRatio = 0,
-        size = 0.9
-      )
-    })
     word_cloud()
   })
   
