@@ -35,7 +35,17 @@ ui <- fluidPage(
                            height = '400px') %>% 
                shiny::tagAppendAttributes(style = 'width:100%;'),
              
-             fileInput("upload", "Upload a text file", accept = c(".csv", ".txt"))
+             fileInput("upload", "Upload a text file", accept = c(".csv", ".txt")),
+             
+             tags$style(
+               
+               ".progress-bar {
+                    background-color: #12c462;
+                    font-size: 12px;
+                    line-height: 12px;
+                }"
+             )
+             
              ),
     
     tabPanel("Word Cloud",

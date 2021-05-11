@@ -5,7 +5,7 @@ account: monyake
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 3663447
-bundleId: 4581998
+bundleId: 4582162
 url: https://monyake.shinyapps.io/wordcloud/
-when: 1620667322.03404
-lastSyncTime: 1620667322.03404
+when: 1620669355.91052
+lastSyncTime: 1620669355.91052
