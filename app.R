@@ -11,6 +11,7 @@ library(webshot)
 library(shinythemes)
 library(reactable)
 library(htmltools)
+library(shinydashboard)
 #webshot::install_phantomjs()
 
 
@@ -83,7 +84,7 @@ ui <- navbarPage(
                        column(2,
                               selectInput(
                                 inputId = "shape",
-                                label = "Shape of the cloud to draw",
+                                label = "Shape of the cloud",
                                 choices = list(
                                   "Circle" = "circle",
                                   "Cardioid" = "cardioid",
@@ -166,9 +167,27 @@ ui <- navbarPage(
              ),
              column(
                8,
+               style = "
+                      box-shadow: 0 2px 4px 0;
+                      border-radius: 5px;
+                      padding: 5px;
+                       ",
+               
                fluidRow(
                  column(
                    6,
+                   tags$style("
+                              .row {
+                                margin-right: 0;
+                                margin-left: 0;
+                              }
+                              "),
+                   tags$style(
+                     ".form-control.shiny-bound-input {
+                        height: 34px;
+                     }
+                     "
+                   ),
                    textInput(
                      "keyword",
                      label = "Enter keyword to get context",
@@ -177,13 +196,10 @@ ui <- navbarPage(
                  ),
                  column(
                    6, 
-                   sliderInput(
-                     "window",
-                     "Window size",
-                     min = 3,
-                     max = 10,
-                     value = 5
-                   )
+                   selectInput("window",
+                                "Change window size",
+                                selected = 5,
+                               choices = c(3, 4, 5, 6, 7, 8, 9, 10))
                  ),
                  fluidRow(
                    column(
@@ -326,6 +342,7 @@ server = function(input, output, session) {
     word_cloud_df() %>% 
       filter(freq > 1 & str_length(word) > 2) %>% 
       reactable(
+        defaultPageSize = 15,
         defaultSorted = "freq",
         columns = list(
           word = colDef(
@@ -367,6 +384,7 @@ server = function(input, output, session) {
     data.frame(kw) %>%
       select(pre, keyword, post)%>%
       reactable(
+        defaultPageSize = 13,
         columns = list(
           keyword = colDef(cell = function(value) {
             class <- "keyword"
