@@ -84,7 +84,7 @@ ui <- navbarPage(
                        column(2,
                               selectInput(
                                 inputId = "shape",
-                                label = "Shape of the cloud",
+                                label = "Shape",
                                 choices = list(
                                   "Circle" = "circle",
                                   "Cardioid" = "cardioid",
@@ -111,7 +111,7 @@ ui <- navbarPage(
                               ),
                               colourInput(
                                 inputId = "background",
-                                label = "Colour of the background",
+                                label = "Background Colour",
                                 returnName = FALSE,
                                 palette = "square",
                                 closeOnClick = TRUE,
@@ -120,7 +120,7 @@ ui <- navbarPage(
                        column(2,
                               selectInput(
                                 inputId = "colour",
-                                label = "Colour of text",
+                                label = "Text Colour",
                                 choices = list(
                                   "Random-dark" = "random-dark",
                                   "Random-light" = "random-light"
@@ -129,9 +129,17 @@ ui <- navbarPage(
                               )
                               
                        ),
-                       column(4,
+                       column(2,
+                         selectInput(
+                           "min_freq",
+                           "Min Frequency",
+                           selected = 1,
+                           choices = c(1, 2, 3, 4, 5)
+                         )
+                       ),
+                       column(2,
                               downloadButton("wordcloud_download",
-                                             label = "Download Word Cloud",
+                                             label = "Download",
                                              class = "btn-block"),
                               tags$style(
                                 ".shiny-download-link {
@@ -152,8 +160,8 @@ ui <- navbarPage(
                      
                      fluidRow(
                        column(12,
-                              wordcloud2Output("mywordcloud", width = "100%",
-                                               height = "768px")
+                              wordcloud2Output("mywordcloud", width = "auto",
+                              height = "600px")
                        )
                      )
            )
@@ -301,7 +309,7 @@ server = function(input, output, session) {
     word_df <- as_tibble(term_frequency) %>% 
       rename(word = feature,freq = frequency) %>% 
       select(word, freq) %>% 
-      filter(str_length(word) > 2)
+      filter(str_length(word) > 2 & freq > input$min_freq)
     
     return(word_df)
     
@@ -315,7 +323,7 @@ server = function(input, output, session) {
       color = input$colour,
       shape = input$shape,
       rotateRatio = 0,
-      size = 0.9
+      size = 0.55
     )
   })
   
