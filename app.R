@@ -7,12 +7,13 @@ library(stringr)
 library(shiny)
 library(colourpicker)
 library(htmlwidgets)
+library(shinyWidgets)
 library(webshot)
 library(shinythemes)
 library(reactable)
 library(htmltools)
 library(shinydashboard)
-#webshot::install_phantomjs()
+webshot::install_phantomjs()
 
 
 # Render a bar chart with a label on the left
@@ -249,6 +250,7 @@ server = function(input, output, session) {
     } else {
       showTab(inputId = "tabs", target = "Word Cloud")
       showTab(inputId = "tabs", target = "Keyword-In-Context")
+      updateNavbarPage(session, "tabs", selected = "Word Cloud")
     }
   })
   
@@ -336,6 +338,7 @@ server = function(input, output, session) {
     filename = function() paste("wordcloud", ".png", sep=""), 
     
     content = function(file) {
+      
       owd <- setwd(tempdir())
       on.exit(setwd(owd))
       saveWidget(word_cloud(), "temp.html", selfcontained = F)
